@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحدي النرد</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      font-family: Tahoma, Arial, sans-serif;
+      background: linear-gradient(135deg, #eaf4ff, #fff4dc);
+      color: #18324b; display: flex; justify-content: center; align-items: center;
+    }
+    .game {
+      width: min(760px, 100%); background: white; padding: 30px;
+      border-radius: 26px; box-shadow: 0 14px 40px #24415b20;
+      text-align: center; border: 1px solid #e4edf5;
+    }
+    h1 { color: #147a5b; margin: 0 0 8px; font-size: 2rem; }
+    .subtitle { color: #668092; margin: 0 0 24px; }
+    .players { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .player {
+      background: #f2f8ff; border-radius: 20px; padding: 20px 12px;
+      border: 2px solid #e3eef8;
+    }
+    .player.computer { background: #fff7e8; border-color: #f6e8c9; }
+    .player h2 { margin: 0 0 12px; font-size: 1.15rem; }
+    .die {
+      width: 112px; height: 112px; margin: auto; border-radius: 22px;
+      background: white; display: grid; place-items: center;
+      font-size: 76px; color: #246ba3; box-shadow: 0 5px 16px #1b45601a;
+    }
+    .computer .die { color: #bd7a1e; }
+    .score { margin-top: 12px; font-weight: bold; color: #536d80; }
+    button {
+      border: 0; border-radius: 14px; padding: 14px 28px; margin: 22px 0 12px;
+      background: #147a5b; color: white; font-size: 1.05rem; font-weight: bold;
+      cursor: pointer; font-family: inherit;
+    }
+    button:hover { background: #0e6248; }
+    button:focus-visible { outline: 3px solid #f2bd55; outline-offset: 3px; }
+    #result {
+      min-height: 54px; padding: 14px; border-radius: 14px;
+      background: #f4f8f6; color: #28634e; font-weight: bold; line-height: 1.7;
+    }
+    .hint { color: #8395a2; font-size: .9rem; margin-top: 15px; }
+    @media (max-width: 520px) {
+      body { padding: 12px; }
+      .game { padding: 20px 14px; }
+      .die { width: 88px; height: 88px; font-size: 60px; }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.12.3/brython.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.12.3/brython_stdlib.min.js"></script>
+  <script type="text/python">
+from browser import document
+import random
+
+WIN_SCORE = 5
+faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"]
+scores = [0, 0]
+player_rolls = []
+
+def roll(event):
+    player = random.randint(1, 6)
+    computer = random.randint(1, 6)
+    player_rolls.append(player)
+
+    document["player-die"].text = faces[player - 1]
+    document["computer-die"].text = faces[computer - 1]
+
+    if player > computer:
+        scores[0] += 1
+        message = "فزتِ بهذه الجولة! 🎉"
+    elif computer > player:
+        scores[1] += 1
+        message = "الكمبيوتر فاز بهذه الجولة."
+    else:
+        message = "تعادل! لا توجد نقطة."
+
+    document["player-score"].text = str(scores[0])
+    document["computer-score"].text = str(scores[1])
+    document["history"].text = "نتائج رمياتك: " + "، ".join(str(x) for x in player_rolls)
+    document["result"].text = message
+
+    if scores[0] == WIN_SCORE:
+        document["result"].text = "مبروك! فزتِ باللعبة كلها 🏆"
+        document["roll-button"].disabled = True
+    elif scores[1] == WIN_SCORE:
+        document["result"].text = "فاز الكمبيوتر باللعبة. حاولي مرة ثانية!"
+        document["roll-button"].disabled = True
+
+def restart(event):
+    scores[0] = 0
+    scores[1] = 0
+    player_rolls.clear()
+    document["player-die"].text = "⚀"
+    document["computer-die"].text = "⚀"
+    document["player-score"].text = "0"
+    document["computer-score"].text = "0"
+    document["history"].text = "نتائج رمياتك: —"
+    document["result"].text = "اضغطي على زر ارمي النرد لبدء اللعب."
+    document["roll-button"].disabled = False
+
+document["roll-button"].bind("click", roll)
+document["restart-button"].bind("click", restart)
+  </script>
+</head>
+<body onload="brython()">
+  <main class="game">
+    <h1>🎲 تحدي النرد</h1>
+    <p class="subtitle">ارمي النرد، وتغلّبي على الكمبيوتر! أول من يصل إلى 5 نقاط يفوز.</p>
+
+    <section class="players">
+      <div class="player">
+        <h2>أنتِ</h2>
+        <div class="die" id="player-die">⚀</div>
+        <div class="score">النقاط: <span id="player-score">0</span></div>
+      </div>
+      <div class="player computer">
+        <h2>الكمبيوتر</h2>
+        <div class="die" id="computer-die">⚀</div>
+        <div class="score">النقاط: <span id="computer-score">0</span></div>
+      </div>
+    </section>
+
+    <button id="roll-button">ارمي النرد</button>
+    <div id="result" aria-live="polite">اضغطي على زر ارمي النرد لبدء اللعب.</div>
+    <p id="history" class="hint">نتائج رمياتك: —</p>
+    <button id="restart-button" style="background:#55758c; margin-top:8px;">لعبة جديدة</button>
+    <p class="hint">ملاحظة: كل جولة تعطي نقطة للفائز، والتعادل لا يضيف نقاطاً.</p>
+  </main>
+</body>
+</html>
